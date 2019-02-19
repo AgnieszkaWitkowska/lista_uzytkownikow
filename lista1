@@ -1,0 +1,346 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+
+
+#define FNAZWA "dane.txt"
+
+typedef struct pLista {
+    char NazwaUzytkownika[20];
+    char Haslo[20];
+    struct pLista *nastepny;
+    struct pLista *poprzedni;
+} lista;
+
+
+lista *utworzElement(char *nazwa, char *haslo);
+
+void dodajNaKoniec(lista **glowa, lista *nowy);
+
+int pierwszeUruchomienie(lista **glowa);
+
+void dodajUzytkownika(lista **glowa);
+
+int sprawdzDaneLogowania(lista *glowa);
+
+int wyszukajWLiscie(lista *glowa, char *nazwaUzytkownika, char *hasloUzytkownika);
+
+int wyszukajUzytkownika(lista *glowa, char *nazwaUzytkownika);
+
+void usunUzytkownika(lista **glowa);
+
+void wyswietlListe(lista *glowa);
+
+void nagrajListe(lista *glowa);
+
+void oczekiwanieNaKlawisz();
+
+void wyczyscBufor();
+
+void wyczyscEkran();
+
+void poruszajPoLiscie(lista *glowa);
+
+void menuPoruszanie();
+
+void menu();
+
+int main() {
+    lista *glowa = NULL;
+    pierwszeUruchomienie(&glowa);
+    if (!sprawdzDaneLogowania(glowa)) {
+        printf("BĹ‚Ä™dne dane logowania");
+        return 0;
+    }
+    int wybor = 0;
+    for (;;) {
+        wyczyscEkran();
+        menu();
+
+        if (!scanf("%d", &wybor)) wybor = 0;
+        wyczyscBufor();
+        switch (wybor) {
+            case 1:
+                dodajUzytkownika(&glowa);
+                break;
+            case 2:
+                usunUzytkownika(&glowa);
+                break;
+            case 3:
+                wyswietlListe(glowa);
+                break;
+            case 4:
+                nagrajListe(glowa);
+                break;
+            case 5:
+                poruszajPoLiscie(glowa);
+                break;
+            case 6:
+                printf("nara");
+                return 0;
+            default:
+                printf("bledny wybor. Wprowadz cyfre od 1 do 5\n");
+                break;
+        }
+        oczekiwanieNaKlawisz();
+        wyczyscBufor();
+    }
+}
+
+lista *utworzElement(char *nazwa, char *haslo) {
+
+    lista *nowyElement = (lista *) malloc(sizeof(lista));
+    if (nowyElement == NULL) {
+        printf("Nie udalo siÄ™ zaalokowaÄ‡ pamieci");
+        exit(0);
+    }
+    strcpy(nowyElement->Haslo, haslo);
+    strcpy(nowyElement->NazwaUzytkownika, nazwa);
+    nowyElement->nastepny = NULL;
+    nowyElement->poprzedni = NULL;
+    return nowyElement;
+}
+
+void dodajNaKoniec(lista **glowa, lista *nowy) {
+
+    if (*glowa == NULL) {
+        *glowa = nowy;
+    } else {
+        lista *temp = *glowa;
+        while (temp->nastepny != NULL) {
+            temp = temp->nastepny;
+        }
+        temp->nastepny = nowy;
+        nowy->poprzedni = temp;
+    }
+}
+
+int pierwszeUruchomienie(lista **glowa) {
+    wyczyscEkran();
+    if (access(FNAZWA, F_OK) != -1) {
+        FILE *pFile;
+        pFile = fopen(FNAZWA, "r");
+        if (pFile == NULL) {
+            printf("nie udalo sie™ otworzyc pliku");
+            return 1;
+        } else {
+            char tempNazwa[20];
+            char tempHaslo[20];
+            while (fscanf(pFile, "%s %s", tempNazwa, tempHaslo) != EOF) {
+                dodajNaKoniec(glowa, utworzElement(tempNazwa, tempHaslo));
+            }
+        }
+        fclose(pFile);
+    } else {
+        dodajNaKoniec(glowa, utworzElement("admin", "haslo"));
+        printf("Witaj\n Po raz piewszy uruchomiles program\n");
+        printf("HasĹ‚o i login dostepne po zakupieniu licencji\n");
+        nagrajListe(*glowa);
+        return 1;
+    }
+    return 0;
+}
+
+void dodajUzytkownika(lista **glowa) {
+    char nazwaUzytkownika[20];
+    char hasloUzytkownika[20];
+    printf("Wprowadz nowego uzytkownika ");
+    scanf(" %s", nazwaUzytkownika);
+    if (wyszukajUzytkownika(*glowa, nazwaUzytkownika)){
+        printf("taki uzytkownik istnieje\n");
+        wyczyscBufor();
+        return;
+    }
+    wyczyscBufor();
+    printf("Podaj haslo uzytkownika ");
+    scanf(" %s", hasloUzytkownika);
+    dodajNaKoniec(glowa, utworzElement(nazwaUzytkownika, hasloUzytkownika));
+    wyczyscBufor();
+    printf("UĹĽytkownik %s zostal‚ dodany\n", nazwaUzytkownika);
+}
+
+int sprawdzDaneLogowania(lista *glowa) {
+    char nazwaUzytkownika[20];
+    char hasloUzytkownika[20];
+    printf("Aby uruchomic program MUSISZ SIĘ zalogowac\n\n Podaj nazwe uzytkownika: ");
+    scanf(" %s", nazwaUzytkownika);
+    wyczyscBufor();
+    printf("Podaj haslo uzytkownika ");
+    scanf(" %s", hasloUzytkownika);
+    wyczyscBufor();
+    if (wyszukajWLiscie(glowa, nazwaUzytkownika, hasloUzytkownika)) {
+        return 1;
+    }
+    return 0;
+}
+
+int wyszukajWLiscie(lista *glowa, char *nazwaUzytkownika, char *hasloUzytkownika) {
+    lista *temp = NULL;
+    temp = glowa;
+
+    while (temp != NULL) {
+        if ((strcmp(temp->NazwaUzytkownika, nazwaUzytkownika) == 0) && (strcmp(temp->Haslo, hasloUzytkownika) == 0)) {
+            return 1;
+        }
+        temp = temp->nastepny;
+    }
+    return 0;
+}
+
+int wyszukajUzytkownika(lista *glowa, char *nazwaUzytkownika) {
+    lista *temp = NULL;
+    temp = glowa;
+
+    while (temp != NULL) {
+        if ((strcmp(temp->NazwaUzytkownika, nazwaUzytkownika) == 0)) {
+            return 1;
+        }
+        temp = temp->nastepny;
+    }
+    return 0;
+}
+
+void usunUzytkownika(lista **glowa) {
+    char nazwaUzytkownika[20];
+    printf("Podaj uzytkownika do usuniecia ");
+    scanf(" %s", nazwaUzytkownika);
+    wyczyscBufor();
+    if (strcmp(nazwaUzytkownika, "admin") == 0){
+        printf("Nie mozna usunac administratora\n");
+        return;
+    }
+    lista *temp, *poprzedni;
+    temp = *glowa;
+    if (temp != NULL && strcmp(temp->NazwaUzytkownika, nazwaUzytkownika) == 0){
+        *glowa = temp->nastepny;
+        free(temp);
+        return;
+    } while (temp != NULL && strcmp(temp->NazwaUzytkownika, nazwaUzytkownika) != 0){
+        poprzedni = temp;
+        temp = temp ->nastepny;
+    }
+    if (temp == NULL){
+        printf("brak uĹĽytkownika na liĹ›cie\n");
+        return;
+    }
+    poprzedni->nastepny = temp->nastepny;
+    free(temp);
+    printf("uĹĽytkownik %s zostaĹ‚ usuniÄ™ty\n", nazwaUzytkownika);
+}
+
+void wyswietlListe(lista *glowa) {
+    lista *temp;
+    temp = glowa;
+    if (glowa == NULL) {
+        printf("lista pusta");
+    } else {
+        printf("PeĹ‚na lista uĹĽytkownikĂłw z hasĹ‚ami\n");
+        printf("login  | haslo\n");
+        while (temp != NULL) {
+            printf(" %s |  %s\n", temp->NazwaUzytkownika, temp->Haslo);
+            temp = temp->nastepny;
+        }
+    }
+}
+
+void nagrajListe(lista *glowa) {
+    lista *temp;
+    temp = glowa;
+    FILE *pFile;
+    pFile = fopen("dane.txt", "w");
+    if (pFile == NULL) {
+        printf("nie udaĹ‚o sie otworzyÄ‡ pliku");
+    } else {
+        while (temp != NULL) {
+            fprintf(pFile, "%s %s\n", temp->NazwaUzytkownika, temp->Haslo);
+            temp = temp->nastepny;
+        }
+    }
+    fclose(pFile);
+    printf("Lista zostaĹ‚a nagrana\n");
+}
+
+void oczekiwanieNaKlawisz() {
+    printf("NaciĹ›nij enter aby kontynuowaÄ‡\n");
+}
+
+void wyczyscBufor() {
+    while (getchar() != '\n');
+}
+
+void wyczyscEkran() {
+    system("cls");
+}
+
+void poruszajPoLiscie(lista *glowa){
+    lista *temp = glowa;
+    menuPoruszanie();
+    unsigned char a;
+    for(;;){
+        a = getchar();
+        if (a == 'q'){
+            break;
+        }
+        else if (a == 'z'){
+            menuPoruszanie();
+            if (temp->poprzedni != NULL){
+                temp = temp->poprzedni;
+                printf("%s", temp->NazwaUzytkownika);
+            } else{
+                printf("To jest pierwszy element listy:\n %s\n", temp->NazwaUzytkownika);
+            }
+        }else if (a == 'x'){
+            menuPoruszanie();
+            if (temp->nastepny != NULL){
+                temp = temp->nastepny;
+                printf(" %s\n", temp->NazwaUzytkownika);
+            }else {
+                printf("To jest ostatni elemente listy:\n  %s\n", temp->NazwaUzytkownika);
+            }
+        }
+        wyczyscBufor();
+
+    }
+    return;
+}
+
+void menuPoruszanie(){
+    wyczyscEkran();
+    printf("poruszanie sie po liĹ›cie:\n");
+    printf("nastÄ™pny - x\n");
+    printf("poprzedni - z\n");
+    printf("powrĂłt do menu - q\n");
+}
+
+void menu() {
+    puts("*******************************************************************************");
+    puts("*                                                                             *");
+    puts("*                                                                             *");
+    puts("*                             autor: dr                                       *");
+    puts("*                                                                             *");
+    puts("*                                                                             *");
+    puts("*******************************************************************************");
+    puts("");
+    printf("MENU\n\n");
+    printf("1. Dodaj nowego uzytkownika \n");
+    printf("2. Usun uzytkownika \n");
+    printf("3. Wyswietl listÄ™ \n");
+    printf("4. Nagraj liste \n");
+    printf("5. Poruszaj po liĹ›cie\n");
+    printf("6. Wyjscie\n");
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
