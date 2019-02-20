@@ -1,0 +1,156 @@
+//---------------------------------------------------------------------------
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+#include <conio.h>
+
+
+
+//---------------------------------------------------------------------------
+
+typedef struct TUzytkownik
+{
+   char sNazwaUzytkownika[100];
+   char sHasloUzytkownika[100];
+
+   struct TUzytkownik* sAdresNastepnegoElementu;
+   struct TUzytkownik* sAdresPoprzedniegoElementu;
+
+} TUzytkownik;
+
+
+#pragma argsused
+int main(int argc, char* argv[])
+{
+    TUzytkownik* gPoczatekListy = NULL;
+    TUzytkownik* lNowyElment= NULL;
+    TUzytkownik* lElementListy= NULL;
+    TUzytkownik* lOstatniElementListy = NULL;
+    TUzytkownik* lBiezacyElementListy = NULL;
+
+    int lOpcja;
+    int i=0;
+ 
+    while(1){
+      system("cls");
+      printf("******************************************\n");
+      printf("*                                        *\n");
+      printf("*       OBSLUGA UZYTKOWNIKOW SYSTEMU     *\n");
+      printf("*                                        *\n");
+      printf("******************************************\n\n\n");
+
+      if(lBiezacyElementListy != NULL){
+         printf("  Nazwa uzytkownika - %s \n", lBiezacyElementListy->sNazwaUzytkownika);
+         printf("  Haslo uzytkownika - %s \n\n", lBiezacyElementListy->sHasloUzytkownika);
+         printf("  Adresy ------------------------ \n");
+         printf("  * element biezacy   - %d \n", lBiezacyElementListy);
+         printf("  * element poprzedni - %d \n", lBiezacyElementListy->sAdresPoprzedniegoElementu);
+         printf("  * element nastepny  - %d \n", lBiezacyElementListy->sAdresNastepnegoElementu);
+         printf("  ------------------------------- \n");
+      }else{
+        printf("******************************************\n");     	      	
+        printf("*   BRAK ZDEFINIOWANYCH UZYTKOWNIKOW     *\n");
+        printf("******************************************\n");     	      	
+	  }
+
+
+      printf("\n\n");
+      printf("******************************************\n");
+      printf("*         *        *    *    *           *\n");
+      printf("* [D]odaj * [U]sun * <- * -> * [W]yjscie *\n");
+      printf("*         *        *    *    *           *\n");
+      printf("******************************************\n");
+
+
+      //scanf("%d", &lOpcja);
+
+      lOpcja = getch();
+      
+      switch(lOpcja){
+
+        case 87:
+        case 119:{
+	   return 0;
+	}
+        case 68:
+        case 100:{
+           system("cls");
+
+           system("cls");
+           printf("******************************************\n");
+           printf("*                                        *\n");
+           printf("*       OBSLUGA UZYTKOWNIKOW SYSTEMU     *\n");
+           printf("*                                        *\n");
+           printf("******************************************\n");
+	   printf("*            DODAWANIE UZYTKOWNIKA       *\n");
+           printf("******************************************\n\n");
+
+	   lNowyElment = (TUzytkownik*)malloc(sizeof(TUzytkownik));
+           printf("\n  Podaj nazwe uzytkownika: ");
+           scanf("%s", lNowyElment->sNazwaUzytkownika);
+	   printf("  Podaj haslo uzytkownika: ");
+	   scanf("%s", lNowyElment->sHasloUzytkownika);
+           lNowyElment->sAdresNastepnegoElementu = NULL;
+           lNowyElment->sAdresPoprzedniegoElementu = NULL;
+           lBiezacyElementListy = lNowyElment;
+
+           if(gPoczatekListy == NULL){
+              gPoczatekListy = lNowyElment;
+           }else{
+              lElementListy = gPoczatekListy;
+              while (lElementListy->sAdresNastepnegoElementu != NULL){
+	        lElementListy = lElementListy->sAdresNastepnegoElementu;
+	      }
+              lNowyElment->sAdresPoprzedniegoElementu = lElementListy;
+              lElementListy->sAdresNastepnegoElementu = lNowyElment;
+           }
+           lNowyElment = NULL;
+	   break;
+	}
+        case 85:
+        case 117:{
+
+           if(lBiezacyElementListy!=NULL){
+
+              lElementListy = lBiezacyElementListy;
+              if(lElementListy->sAdresPoprzedniegoElementu!=NULL){
+                 lElementListy->sAdresPoprzedniegoElementu->sAdresNastepnegoElementu = lElementListy->sAdresNastepnegoElementu;
+              }   
+              else{
+                 gPoczatekListy = lElementListy->sAdresNastepnegoElementu;
+                 lBiezacyElementListy = gPoczatekListy;
+              }
+              if(lElementListy->sAdresNastepnegoElementu!=NULL){
+                 lElementListy->sAdresNastepnegoElementu->sAdresPoprzedniegoElementu = lElementListy->sAdresPoprzedniegoElementu;
+                 lBiezacyElementListy = lElementListy->sAdresNastepnegoElementu;
+              }else{
+                 lBiezacyElementListy = lElementListy->sAdresPoprzedniegoElementu;
+              }
+              free(lElementListy);
+           }
+           break;
+	}
+        case 75:{ //Strzałka w lewo
+
+           lElementListy = lBiezacyElementListy;
+
+           if(lElementListy->sAdresPoprzedniegoElementu != NULL){
+              lBiezacyElementListy = lElementListy->sAdresPoprzedniegoElementu;
+           }
+           break;
+ 	}
+        case 77:{ //Strzałka w prawo
+
+           lElementListy = lBiezacyElementListy;
+
+           if(lElementListy->sAdresNastepnegoElementu != NULL){
+              lBiezacyElementListy = lElementListy->sAdresNastepnegoElementu;
+           }
+
+           break;
+        }
+      }
+    }
+    return 0;
+}
+//---------------------------------------------------------------------------
